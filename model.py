@@ -9,7 +9,7 @@ class Model:
                  learning_rate=0.001,
                  epoch_num=10000,
                  encoder_hidden_sizes=list([500]),
-                 batch_size=64):
+                 batch_size=32):
         self.max_length = max_length
         self.embedding_dim = embedding_dim
         self.learning_rate = learning_rate
@@ -105,20 +105,21 @@ class Model:
 
             for i in range(self.epoch_num):
                 total_loss = 0.0
-                for j in range(int(x_train.size/self.batch_size)):
+                for j in range(int(x_train.shape[0]/self.batch_size)):
                     left = j * self.batch_size
                     right = (j + 1) * self.batch_size
-                    loss_current, _ = sess.run(
-                        [loss, optimizer],
-                        feed_dict={
-                            input_x: x_train[left:right].reshape(
-                                (self.batch_size, self.max_length, self.embedding_dim)),
-                            output_y: y_train[left:right].reshape(
-                                (self.batch_size, 1))})
-                    total_loss += loss_current
+                    if right < x_train.shape[0]:
+                        loss_current, _ = sess.run(
+                            [loss, optimizer],
+                            feed_dict={
+                                input_x: x_train[left:right].reshape(
+                                    (self.batch_size, self.max_length, self.embedding_dim)),
+                                output_y: y_train[left:right].reshape(
+                                    (self.batch_size, 1))})
+                        total_loss += loss_current
                 print('Epoch ' + str(i) + '/' + str(self.epoch_num) +
                       ': loss: ' +
-                      str(total_loss / int(x_train.size / self.batch_size)))
+                      str(total_loss / int(x_train.shape[0] / self.batch_size)))
                 saver.save(sess, self.name + 'checkpoints/training', i)
 
     def test(self, x_test, y_test):
@@ -142,16 +143,17 @@ class Model:
                 saver.restore(sess, ckpt.model_checkpoint_path)
 
             total_loss = 0.0
-            for j in range(int(x_test.size / self.batch_size)):
+            for j in range(int(x_test.shape[0] / self.batch_size)):
                 left = j * self.batch_size
                 right = (j + 1) * self.batch_size
-                loss_current = sess.run(
-                    [loss],
-                    feed_dict={
-                        input_x: x_test[left:right].reshape(
-                            (self.batch_size, self.max_length, self.embedding_dim)),
-                        output_y: y_test[left:right].reshape(
-                            (self.batch_size, 1))})
-                total_loss += loss_current
+                if right < x_test.shape[0]:
+                    loss_current = sess.run(
+                        [loss],
+                        feed_dict={
+                            input_x: x_test[left:right].reshape(
+                                (self.batch_size, self.max_length, self.embedding_dim)),
+                            output_y: y_test[left:right].reshape(
+                                (self.batch_size, 1))})
+                    total_loss += loss_current
         print('Test loss:' +
-              str(total_loss / (int(x_test.size / self.batch_size))))
+              str(total_loss / (int(x_test.shape[0] / self.batch_size))))
