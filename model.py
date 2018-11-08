@@ -148,7 +148,7 @@ class Model:
                 right = (j + 1) * self.batch_size
                 if right < x_test.shape[0]:
                     loss_current = sess.run(
-                        [loss],
+                        loss,
                         feed_dict={
                             input_x: x_test[left:right].reshape(
                                 (self.batch_size, self.max_length, self.embedding_dim)),
