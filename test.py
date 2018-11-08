@@ -8,7 +8,7 @@ def main(argv):
         'data/training_set_rel3.tsv',
         'data/word_embedding_glove_6B_200d.txt'))
     basic_model = model.Model()
-    # basic_model.train(essays_embedding, labels)
+    basic_model.train(essays_embedding, labels)
     basic_model.test(essays_embedding, labels)
 
 

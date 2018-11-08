@@ -55,7 +55,7 @@ class Model:
         return encoder_outputs, encoder_state
 
     def _scoring(self, input_x, output_y):
-        with tf.name_scope('scoring'):
+        with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
             w = tf.get_variable(
                 'w', shape=[self.batch_size, 2 * self.encoder_hidden_sizes[-1]],
                 initializer=tf.truncated_normal_initializer(stddev=0.1))
@@ -117,10 +117,10 @@ class Model:
                                 output_y: y_train[left:right].reshape(
                                     (self.batch_size, 1))})
                         total_loss += loss_current
-                print('Epoch ' + str(i) + '/' + str(self.epoch_num) +
+                print('Epoch ' + str(i) + '/' + str(self.epoch_num + 1) +
                       ': loss: ' +
                       str(total_loss / int(x_train.shape[0] / self.batch_size)))
-                saver.save(sess, self.name + 'checkpoints/training', i)
+                saver.save(sess, self.name + '_checkpoints/training', i)
 
     def test(self, x_test, y_test):
         print('Testing...')
@@ -138,7 +138,7 @@ class Model:
 
             saver = tf.train.Saver()
             ckpt = tf.train.get_checkpoint_state(os.path.dirname(
-                self.name + 'checkpoints/checkpoint'))
+                self.name + '_checkpoints/checkpoint'))
             if ckpt and ckpt.model_checkpoint_path:
                 saver.restore(sess, ckpt.model_checkpoint_path)
 
