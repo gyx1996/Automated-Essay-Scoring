@@ -7,7 +7,7 @@ class Model:
                  max_length=500,
                  embedding_dim=200,
                  learning_rate=0.001,
-                 epoch_num=10000,
+                 epoch_num=500,
                  encoder_hidden_sizes=list([500]),
                  batch_size=32):
         self.max_length = max_length
