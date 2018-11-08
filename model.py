@@ -138,7 +138,7 @@ class Model:
 
             saver = tf.train.Saver()
             ckpt = tf.train.get_checkpoint_state(os.path.dirname(
-                self.name + '_checkpoints/checkpoint'))
+                self.name + 'checkpoints/checkpoint'))
             if ckpt and ckpt.model_checkpoint_path:
                 saver.restore(sess, ckpt.model_checkpoint_path)
 
