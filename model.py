@@ -17,7 +17,7 @@ def get_pure_batch(given_list, batch_size, ordering=True):
 
     def get_batch():
         while True:
-            yield [next(one_element_generator) for _ in range(5)]
+            yield [next(one_element_generator) for _ in range(batch_size)]
 
     one_element_generator = get_one()
     batch_generator = get_batch()
