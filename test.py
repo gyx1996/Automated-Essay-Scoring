@@ -13,6 +13,8 @@ def main(argv):
     y_result = basic_model.test(essays_embedding, labels)
     labels_int = [int(x) for x in labels]
     results_int = [int(x) for x in y_result]
+    for i in range(len(labels)):
+        print(labels[i], results_int[i], y_result[i])
     print(score.quadratic_weighted_kappa(labels_int, results_int))
     print(score.quadratic_weighted_kappa(results_int, labels_int))
 
