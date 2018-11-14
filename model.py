@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 import os
 import random
 
@@ -136,8 +137,13 @@ class Model:
                     loss_current, _ = sess.run(
                         [loss, optimizer],
                         feed_dict={
-                            input_x: x_train_batch,
-                            output_y: y_train_batch})
+                            input_x: np.array(
+                                x_train_batch).reshape(
+                                (self.batch_size,
+                                 self.max_length,
+                                 self.embedding_dim)),
+                            output_y: np.array(y_train_batch).reshape(
+                                (self.batch_size, 1))})
                     total_loss += loss_current
                 print('Epoch ' + str(i) + '/' + str(self.epoch_num + 1) +
                       ': loss: ' +
@@ -176,8 +182,12 @@ class Model:
                 loss_current, y_hat_current = sess.run(
                     [loss, y_hat],
                     feed_dict={
-                        input_x: x_test_batch,
-                        output_y: y_test_batch})
+                        input_x: np.array(x_test_batch).reshape(
+                            (self.batch_size,
+                             self.max_length,
+                             self.embedding_dim)),
+                        output_y: np.array(y_test_batch).reshape(
+                            (self.batch_size, 1))})
                 total_loss += loss_current
                 y_result += y_hat_current
             y_result = y_result[:x_test.shape[0]]
