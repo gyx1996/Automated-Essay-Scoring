@@ -10,8 +10,7 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv, '-n:-l:', ['name=', 'loss='])
     except getopt.GetoptError as err:
-        # print help information and exit:
-        print(err)  # will print something like "option -a not recognized"
+        print(err)
         sys.exit(2)
 
     model_name = None
@@ -19,7 +18,7 @@ def main(argv):
     for o, a in opts:
         if o in ('-n', '--name'):
             model_name = a
-        if o in ('-l', '--loss'):
+        elif o in ('-l', '--loss'):
             loss_mode = a
         else:
             assert False, 'unhandled option'
