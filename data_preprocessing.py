@@ -23,6 +23,7 @@ def load_data(filename,
         filename: string
         headline: bool
         target_essay_set: int in {1, 2, ..., 8}
+        lowercase: bool
 
     Returns:
         essays and scores from given target essay set

@@ -1,5 +1,27 @@
 import tensorflow as tf
 import os
+import random
+
+
+def get_pure_batch(given_list, batch_size, ordering=True):
+    def get_one():
+        if ordering:
+            while True:
+                for i in range(len(given_list)):
+                    yield given_list[i]
+        else:
+            while True:
+                batch_index = random.sample(range(len(given_list)), batch_size)
+                for i in range(batch_size):
+                    yield given_list[batch_index[i]]
+
+    def get_batch():
+        while True:
+            yield [next(one_element_generator) for _ in range(5)]
+
+    one_element_generator = get_one()
+    batch_generator = get_batch()
+    return batch_generator
 
 
 class Model:
@@ -8,13 +30,11 @@ class Model:
                  embedding_dim=200,
                  learning_rate=0.001,
                  epoch_num=500,
-                 encoder_hidden_sizes=list([500]),
                  batch_size=32):
         self.max_length = max_length
         self.embedding_dim = embedding_dim
         self.learning_rate = learning_rate
         self.epoch_num = epoch_num
-        self.encoder_hidden_sizes = encoder_hidden_sizes
         self.batch_size = batch_size
         self.name = 'essay_mse'
 
@@ -29,13 +49,13 @@ class Model:
         with tf.name_scope('encoder'):
             fw_cells = [tf.nn.rnn_cell.DropoutWrapper(
                 tf.nn.rnn_cell.BasicLSTMCell(size))
-                      for size in self.encoder_hidden_sizes]
+                      for size in [self.max_length]]
             initial_states_fw = [cell.zero_state(
                 self.batch_size, dtype=tf.float32)
                                  for cell in fw_cells]
             bw_cells = [tf.nn.rnn_cell.DropoutWrapper(
                 tf.nn.rnn_cell.BasicLSTMCell(size))
-                for size in self.encoder_hidden_sizes]
+                for size in [self.max_length]]
             initial_states_bw = [cell.zero_state(
                 self.batch_size, dtype=tf.float32)
                 for cell in bw_cells]
@@ -57,19 +77,19 @@ class Model:
     def _scoring(self, input_x, output_y):
         with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
             w = tf.get_variable(
-                'w', shape=[self.batch_size, 2 * self.encoder_hidden_sizes[-1]],
+                'w', shape=[self.batch_size, 2 * self.max_length],
                 initializer=tf.truncated_normal_initializer(stddev=0.1))
             b = tf.get_variable('b', initializer=tf.zeros(
-                [self.batch_size, 2 * self.encoder_hidden_sizes[-1]]))
+                [self.batch_size, 2 * self.max_length]))
             y_hat = tf.reduce_sum(w * input_x + b, 1)
         with tf.name_scope('loss'):
             loss = tf.reduce_mean(tf.square(output_y - y_hat))
-        return loss
+        return loss, y_hat
 
     def _build_graph(self, input_x, output_y):
         encoder_outputs, encoder_state = self._encoder(input_x)
-        loss = self._scoring(encoder_state.h, output_y)
-        return loss
+        loss, y_hat = self._scoring(encoder_state.h, output_y)
+        return loss, y_hat
 
     def train(self, x_train, y_train):
         """Train the model and save.
@@ -90,11 +110,16 @@ class Model:
                 tf.float32,
                 shape=[self.batch_size, 1],
                 name='score')
-        loss = self._build_graph(input_x, output_y)
+        loss, _ = self._build_graph(input_x, output_y)
 
         with tf.name_scope('optimize'):
             optimizer = tf.train.GradientDescentOptimizer(
                 learning_rate=self.learning_rate).minimize(loss)
+
+        x_train_batch_generator = get_pure_batch(
+            x_train, self.batch_size, ordering=True)
+        y_train_batch_generator = get_pure_batch(
+            y_train, self.batch_size, ordering=True)
 
         print('Training...')
         with tf.Session() as sess:
@@ -106,17 +131,14 @@ class Model:
             for i in range(self.epoch_num):
                 total_loss = 0.0
                 for j in range(int(x_train.shape[0]/self.batch_size)):
-                    left = j * self.batch_size
-                    right = (j + 1) * self.batch_size
-                    if right < x_train.shape[0]:
-                        loss_current, _ = sess.run(
-                            [loss, optimizer],
-                            feed_dict={
-                                input_x: x_train[left:right].reshape(
-                                    (self.batch_size, self.max_length, self.embedding_dim)),
-                                output_y: y_train[left:right].reshape(
-                                    (self.batch_size, 1))})
-                        total_loss += loss_current
+                    x_train_batch = next(x_train_batch_generator)
+                    y_train_batch = next(y_train_batch_generator)
+                    loss_current, _ = sess.run(
+                        [loss, optimizer],
+                        feed_dict={
+                            input_x: x_train_batch,
+                            output_y: y_train_batch})
+                    total_loss += loss_current
                 print('Epoch ' + str(i) + '/' + str(self.epoch_num + 1) +
                       ': loss: ' +
                       str(total_loss / int(x_train.shape[0] / self.batch_size)))
@@ -124,6 +146,10 @@ class Model:
 
     def test(self, x_test, y_test):
         print('Testing...')
+        x_test_batch_generator = get_pure_batch(
+            x_test, self.batch_size, ordering=True)
+        y_test_batch_generator = get_pure_batch(
+            y_test, self.batch_size, ordering=True)
         with tf.Session() as sess:
             input_x = tf.placeholder(
                 tf.float32,
@@ -134,7 +160,7 @@ class Model:
                 shape=[self.batch_size, 1],
                 name='score')
 
-            loss = self._build_graph(input_x, output_y)
+            loss, y_hat = self._build_graph(input_x, output_y)
 
             saver = tf.train.Saver()
             ckpt = tf.train.get_checkpoint_state(os.path.dirname(
@@ -143,17 +169,19 @@ class Model:
                 saver.restore(sess, ckpt.model_checkpoint_path)
 
             total_loss = 0.0
-            for j in range(int(x_test.shape[0] / self.batch_size)):
-                left = j * self.batch_size
-                right = (j + 1) * self.batch_size
-                if right < x_test.shape[0]:
-                    loss_current = sess.run(
-                        loss,
-                        feed_dict={
-                            input_x: x_test[left:right].reshape(
-                                (self.batch_size, self.max_length, self.embedding_dim)),
-                            output_y: y_test[left:right].reshape(
-                                (self.batch_size, 1))})
-                    total_loss += loss_current
+            y_result = []
+            for j in range(int(x_test.shape[0] / self.batch_size) + 1):
+                x_test_batch = next(x_test_batch_generator)
+                y_test_batch = next(y_test_batch_generator)
+                loss_current, y_hat_current = sess.run(
+                    [loss, y_hat],
+                    feed_dict={
+                        input_x: x_test_batch,
+                        output_y: y_test_batch})
+                total_loss += loss_current
+                y_result += y_hat_current
+            y_result = y_result[:x_test.shape[0]]
+        print(y_result)
+        print(y_test)
         print('Test loss:' +
               str(total_loss / (int(x_test.shape[0] / self.batch_size))))
