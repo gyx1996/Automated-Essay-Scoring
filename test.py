@@ -11,8 +11,10 @@ def main(argv):
     basic_model = model.Model()
     # basic_model.train(essays_embedding, labels)
     y_result = basic_model.test(essays_embedding, labels)
-    print(score.quadratic_weighted_kappa(labels, y_result))
-    print(score.quadratic_weighted_kappa(y_result, labels))
+    labels_int = [int(x) for x in labels]
+    results_int = [int(x) for x in y_result]
+    print(score.quadratic_weighted_kappa(labels_int, results_int))
+    print(score.quadratic_weighted_kappa(results_int, labels_int))
 
 
 if __name__ == '__main__':
