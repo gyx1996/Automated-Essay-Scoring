@@ -8,7 +8,7 @@ import score
 
 def main(argv):
     try:
-        opts, args = getopt.getopt(argv, 'nl', ['name=', 'loss='])
+        opts, args = getopt.getopt(argv, 'n:l:', ['name=', 'loss='])
     except getopt.GetoptError as err:
         # print help information and exit:
         print(err)  # will print something like "option -a not recognized"
