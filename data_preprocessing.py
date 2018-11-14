@@ -48,7 +48,7 @@ def load_data(filename,
             essay = ''
         if essay_set == 1:
             essays.append(essay)
-            labels.append(int(splits[6]))
+            labels.append(int(splits[6]) - 2)
     return essays, labels
 
 

@@ -27,26 +27,24 @@ def get_pure_batch(given_list, batch_size, ordering=True):
 
 class Model:
     def __init__(self,
+                 name='essay_mse',
                  max_length=500,
                  embedding_dim=200,
                  learning_rate=0.001,
                  epoch_num=500,
-                 batch_size=32):
+                 batch_size=32,
+                 loss_mode='CE',
+                 label_num=11):
         self.max_length = max_length
         self.embedding_dim = embedding_dim
         self.learning_rate = learning_rate
         self.epoch_num = epoch_num
         self.batch_size = batch_size
-        self.name = 'essay_mse'
+        self.loss_mode = loss_mode
+        self.label_num = label_num
+        self.name = name
 
     def _encoder(self, embedded_batch_data):
-        """
-
-            embedded_batch_data:
-
-        Returns:
-
-        """
         with tf.name_scope('encoder'):
             fw_cells = [tf.nn.rnn_cell.DropoutWrapper(
                 tf.nn.rnn_cell.BasicLSTMCell(size))
@@ -76,15 +74,28 @@ class Model:
         return encoder_outputs, encoder_state
 
     def _scoring(self, input_x, output_y):
-        with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
-            w = tf.get_variable(
-                'w', shape=[self.batch_size, 2 * self.max_length],
-                initializer=tf.truncated_normal_initializer(stddev=0.1))
-            b = tf.get_variable('b', initializer=tf.zeros(
-                [self.batch_size, 2 * self.max_length]))
-            y_hat = tf.reduce_sum(w * input_x + b, 1)
-        with tf.name_scope('loss'):
-            loss = tf.reduce_mean(tf.square(output_y - y_hat))
+        if self.loss_mode == 'MSE':
+            with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
+                w = tf.get_variable(
+                    'w', shape=[self.batch_size, 2 * self.max_length],
+                    initializer=tf.truncated_normal_initializer(stddev=0.1))
+                b = tf.get_variable('b', initializer=tf.zeros(
+                    [self.batch_size, 2 * self.max_length]))
+                y_hat = tf.reduce_sum(w * input_x + b, 1)
+            with tf.name_scope('loss'):
+                loss = tf.reduce_mean(tf.square(output_y - y_hat))
+        elif self.loss_mode == 'CE':
+            with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
+                projection_layer = tf.layers.Dense(
+                    self.label_num, input_shape=[2 * self.max_length])
+                logits = projection_layer(input_x)
+                predicts = tf.nn.softmax(logits=logits, axis=-1)
+                y_hat = tf.argmax(predicts, axis=-1)
+            with tf.name_scope('loss'):
+                output_y_reshape = tf.reshape(output_y, [-1])
+                cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+                    logits=logits, labels=output_y_reshape)
+                loss = tf.reduce_sum(cross_entropy / tf.to_float(self.batch_size))
         return loss, y_hat
 
     def _build_graph(self, input_x, output_y):
@@ -99,8 +110,10 @@ class Model:
             x_train, y_train: train data with the same element number
         """
         print('Building model for ' + self.name + '...')
-        if not os.path.exists(self.name + '_checkpoints'):
-            os.mkdir(self.name + '_checkpoints')
+        if not os.path.exists('checkpoints/'):
+            os.mkdir('checkpoints/')
+        if not os.path.exists('checkpoints/' + self.name + '/'):
+            os.mkdir('checkpoints/' + self.name + '/')
 
         with tf.name_scope('placeholder'):
             input_x = tf.placeholder(
@@ -108,10 +121,10 @@ class Model:
                 shape=[self.batch_size, self.max_length, self.embedding_dim],
                 name='batch_essays_embeddings')
             output_y = tf.placeholder(
-                tf.float32,
+                tf.int32,
                 shape=[self.batch_size, 1],
                 name='score')
-        loss, _ = self._build_graph(input_x, output_y)
+        loss, y_hat = self._build_graph(input_x, output_y)
 
         with tf.name_scope('optimize'):
             optimizer = tf.train.GradientDescentOptimizer(
@@ -134,8 +147,8 @@ class Model:
                 for j in range(int(x_train.shape[0]/self.batch_size)):
                     x_train_batch = next(x_train_batch_generator)
                     y_train_batch = next(y_train_batch_generator)
-                    loss_current, _ = sess.run(
-                        [loss, optimizer],
+                    loss_current, _, y_hat_current = sess.run(
+                        [loss, optimizer, y_hat],
                         feed_dict={
                             input_x: np.array(
                                 x_train_batch).reshape(
@@ -145,12 +158,13 @@ class Model:
                             output_y: np.array(y_train_batch).reshape(
                                 (self.batch_size, 1))})
                     total_loss += loss_current
-                print('Epoch ' + str(i) + '/' + str(self.epoch_num + 1) +
+                print('Epoch ' + str(i + 1) + '/' + str(self.epoch_num) +
                       ': loss: ' +
                       str(total_loss / int(x_train.shape[0] / self.batch_size)))
-                saver.save(sess, self.name + '_checkpoints/training', i)
+                saver.save(sess, 'checkpoints/' + self.name + '/training', i)
 
     def test(self, x_test, y_test):
+        tf.reset_default_graph()
         print('Testing...')
         x_test_batch_generator = get_pure_batch(
             x_test, self.batch_size, ordering=True)
@@ -162,7 +176,7 @@ class Model:
                 shape=[self.batch_size, self.max_length, self.embedding_dim],
                 name='batch_essays_embeddings')
             output_y = tf.placeholder(
-                tf.float32,
+                tf.int32,
                 shape=[self.batch_size, 1],
                 name='score')
 
@@ -170,7 +184,7 @@ class Model:
 
             saver = tf.train.Saver()
             ckpt = tf.train.get_checkpoint_state(os.path.dirname(
-                self.name + '_checkpoints/checkpoint'))
+                'checkpoints/' + self.name + '/checkpoint'))
             if ckpt and ckpt.model_checkpoint_path:
                 saver.restore(sess, ckpt.model_checkpoint_path)
 
@@ -191,8 +205,6 @@ class Model:
                 total_loss += loss_current
                 y_result = np.append(y_result, y_hat_current)
             y_result = y_result[:x_test.shape[0]]
-        print(y_result)
-        print(y_test)
         print('Test loss:' +
               str(total_loss / (int(x_test.shape[0] / self.batch_size))))
         return y_result
