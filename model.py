@@ -83,7 +83,7 @@ class Model:
                     [self.batch_size, 2 * self.max_length]))
                 y_hat = tf.reduce_sum(w * input_x + b, 1)
             with tf.name_scope('loss'):
-                loss = tf.reduce_mean(tf.square(output_y - y_hat))
+                loss = tf.reduce_mean(tf.square(tf.cast(output_y, tf.float32) - y_hat))
         elif self.loss_mode == 'CE':
             with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
                 projection_layer = tf.layers.Dense(
