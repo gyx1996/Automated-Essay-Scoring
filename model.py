@@ -195,3 +195,4 @@ class Model:
         print(y_test)
         print('Test loss:' +
               str(total_loss / (int(x_test.shape[0] / self.batch_size))))
+        return y_result
