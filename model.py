@@ -189,7 +189,7 @@ class Model:
                         output_y: np.array(y_test_batch).reshape(
                             (self.batch_size, 1))})
                 total_loss += loss_current
-                y_result += y_hat_current
+                y_result = np.append(y_result, y_hat_current)
             y_result = y_result[:x_test.shape[0]]
         print(y_result)
         print(y_test)
