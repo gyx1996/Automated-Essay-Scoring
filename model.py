@@ -89,7 +89,7 @@ class Model:
                 projection_layer = tf.layers.Dense(
                     self.label_num, input_shape=[2 * self.max_length])
                 logits = projection_layer(input_x)
-                predicts = tf.nn.softmax(logits=logits, axis=-1)
+                predicts = tf.nn.softmax(logits=logits, dim=-1)
                 y_hat = tf.argmax(predicts, axis=-1)
             with tf.name_scope('loss'):
                 output_y_reshape = tf.reshape(output_y, [-1])
