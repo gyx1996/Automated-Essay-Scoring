@@ -106,6 +106,7 @@ class Model:
         Args:
             x_train, y_train: train data with the same element number
         """
+        tf.reset_default_graph()
         print('Building model for ' + self.name + '...')
         if not os.path.exists('checkpoints/'):
             os.mkdir('checkpoints/')

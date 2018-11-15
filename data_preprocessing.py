@@ -46,9 +46,13 @@ def load_train_data(filename,
                 essay = splits[2].strip('"')
         else:
             essay = ''
+        essays.append(essay)
         if essay_set == 1:
-            essays.append(essay)
             labels.append(int(splits[6]) - 2)
+        elif essay_set == 2:
+            labels.append(int(splits[6]) + int(splits[9]) - 2)
+        else:
+            labels.append(int(splits[6]))
     return essays, labels
 
 
@@ -95,9 +99,13 @@ def load_valid_data(essay_file,
                 essay = splits[2].strip('"')
         else:
             essay = ''
+        essays.append(essay)
         if essay_set == 1:
-            essays.append(essay)
             labels.append(label_dict[splits[3]] - 2)
+        elif essay_set == 2:
+            labels.append(int(splits[3]) + int(splits[4]) - 2)
+        else:
+            labels.append(int(splits[3]))
     return essays, labels
 
 
@@ -204,18 +212,21 @@ def convert_essay_words_to_embeddings(
     return reshape(embedded_essays, [-1, essay_max_length, embedding_dim])
 
 
-def get_train_essay_embeddings(file_path, embedding_path):
+def get_train_essay_embeddings(
+        file_path, embedding_path, target_essay_set=1):
     """Load data to embedding list.
 
     Args:
         file_path: string, data/training_set_rel3.tsv
         embedding_path: string, data/word_embedding_glove_6B_200d.txt
+        target_essay_set: int, 1-8
 
     Returns:
         essays_embedding: 3-D (essay, word, embedding)
         labels: 1-D (essay)
     """
-    essays, labels = load_train_data(file_path)
+    essays, labels = load_train_data(
+        file_path, target_essay_set=target_essay_set)
     essays_words = convert_essays_to_words(essays)
     padded_essays_words = pad_essays_words(essays_words)
     essays_embedding = convert_essay_words_to_embeddings(
@@ -224,19 +235,22 @@ def get_train_essay_embeddings(file_path, embedding_path):
     return essays_embedding, labels
 
 
-def get_valid_essay_embeddings(essay_file, label_file, embedding_path):
+def get_valid_essay_embeddings(
+        essay_file, label_file, embedding_path, target_essay_set=1):
     """Load data to embedding list.
 
     Args:
         essay_file: string, data/valid_set.tsv
         label_file: string, data/valid_sample_submission_2_column.tsv
         embedding_path: string, data/word_embedding_glove_6B_200d.txt
+        target_essay_set: int, 1-8
 
     Returns:
         essays_embedding: 3-D (essay, word, embedding)
         labels: 1-D (essay)
     """
-    essays, labels = load_valid_data(essay_file, label_file)
+    essays, labels = load_valid_data(
+        essay_file, label_file, target_essay_set=target_essay_set)
     essays_words = convert_essays_to_words(essays)
     padded_essays_words = pad_essays_words(essays_words)
     essays_embedding = convert_essay_words_to_embeddings(
