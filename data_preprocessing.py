@@ -13,10 +13,10 @@ from numpy.random import uniform
 from numpy import reshape
 
 
-def load_data(filename,
-              headline=True,
-              target_essay_set=1,
-              lowercase=True):
+def load_train_data(filename,
+                    headline=True,
+                    target_essay_set=1,
+                    lowercase=True):
     """Load data from .tsv file.
 
     Args:
@@ -24,6 +24,7 @@ def load_data(filename,
         headline: bool
         target_essay_set: int in {1, 2, ..., 8}
         lowercase: bool
+        file_type: string
 
     Returns:
         essays and scores from given target essay set
@@ -128,6 +129,7 @@ def convert_essay_words_to_embeddings(
         essays: 2-D (sentence, word) string list
         word_embedding_path: string
         embedding_dim: int
+        essay_max_length: int
 
     Returns:
         3-D (sentence, word, embedding) float list
@@ -154,22 +156,23 @@ def convert_essay_words_to_embeddings(
     return reshape(embedded_essays, [-1, essay_max_length, embedding_dim])
 
 
-def generate_essay_embeddings(file_path, embedding_path):
+def generate_essay_embeddings(
+        file_path, embedding_path, file_type='train'):
     """Load data to embedding list.
 
     Args:
         file_path: string, data/training_set_rel3.tsv
         embedding_path: string, data/word_embedding_glove_6B_200d.txt
+        file_type: string, train or test
 
     Returns:
         essays_embedding: 3-D (essay, word, embedding)
         labels: 1-D (essay)
     """
-    essays, labels = load_data(file_path)
+    essays, labels = load_train_data(file_path, file_type=file_type)
     essays_words = convert_essays_to_words(essays)
     padded_essays_words = pad_essays_words(essays_words)
     essays_embedding = convert_essay_words_to_embeddings(
         padded_essays_words, embedding_path)
     labels = reshape(labels, [-1])
     return essays_embedding, labels
-

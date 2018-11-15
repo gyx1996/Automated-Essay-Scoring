@@ -76,14 +76,11 @@ class Model:
     def _scoring(self, input_x, output_y):
         if self.loss_mode == 'MSE':
             with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
-                w = tf.get_variable(
-                    'w', shape=[self.batch_size, 2 * self.max_length],
-                    initializer=tf.truncated_normal_initializer(stddev=0.1))
-                b = tf.get_variable('b', initializer=tf.zeros(
-                    [self.batch_size, 2 * self.max_length]))
-                y_hat = tf.reduce_sum(w * input_x + b, 1)
+                projection_layer = tf.layers.Dense(
+                    1, input_shape=[2 * self.max_length])
+                y_hat = projection_layer(input_x)
             with tf.name_scope('loss'):
-                loss = tf.reduce_mean(tf.square(tf.cast(output_y, tf.float32) - y_hat))
+                loss = tf.losses.mean_squared_error(tf.cast(output_y, tf.float32), y_hat)
         elif self.loss_mode == 'CE':
             with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
                 projection_layer = tf.layers.Dense(
