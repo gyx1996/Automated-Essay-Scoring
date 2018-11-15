@@ -35,11 +35,12 @@ def main(argv):
         'data/word_embedding_glove_6B_200d.txt')
 
     if not model_name:
-        model_name = 'default'
+        model_name = 'Default'
 
     if not loss_mode:
         loss_mode = 'CE'
 
+    print('Begin...')
     basic_model = model.Model(name=model_name, loss_mode=loss_mode)
     if train_mode:
         essays_embedding, labels = \
