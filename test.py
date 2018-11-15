@@ -31,7 +31,7 @@ def main(argv):
 
     valid_essays, valid_labels = data_preprocessing.get_valid_essay_embeddings(
         'data/valid_set.tsv',
-        'data/valid_sample_submission_2_column.tsv',
+        'data/valid_sample_submission_2_column.csv',
         'data/word_embedding_glove_6B_200d.txt')
 
     if not model_name:

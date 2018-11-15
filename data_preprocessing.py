@@ -236,7 +236,6 @@ def get_valid_essay_embeddings(essay_file, label_file, embedding_path):
         essays_embedding: 3-D (essay, word, embedding)
         labels: 1-D (essay)
     """
-
     essays, labels = load_valid_data(essay_file, label_file)
     essays_words = convert_essays_to_words(essays)
     padded_essays_words = pad_essays_words(essays_words)

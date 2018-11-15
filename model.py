@@ -77,10 +77,10 @@ class Model:
         if self.loss_mode == 'MSE':
             with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
                 projection_layer = tf.layers.Dense(
-                    1, input_shape=[2 * self.max_length])
-                y_hat = projection_layer(input_x)
+                    1, input_shape=[2 * self.max_length], activation=tf.sigmoid)
+                y_hat = (projection_layer(input_x) + 1) * self.label_num / 2
             with tf.name_scope('loss'):
-                loss = tf.losses.mean_squared_error(tf.cast(output_y, tf.float32), y_hat)
+                loss = tf.losses.mean_squared_error(output_y, y_hat)
         elif self.loss_mode == 'CE':
             with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
                 projection_layer = tf.layers.Dense(
