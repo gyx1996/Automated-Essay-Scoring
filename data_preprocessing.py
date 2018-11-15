@@ -157,7 +157,7 @@ def convert_essay_words_to_embeddings(
 
 
 def generate_essay_embeddings(
-        file_path, embedding_path, file_type='train'):
+        file_path, embedding_path):
     """Load data to embedding list.
 
     Args:
@@ -169,7 +169,7 @@ def generate_essay_embeddings(
         essays_embedding: 3-D (essay, word, embedding)
         labels: 1-D (essay)
     """
-    essays, labels = load_train_data(file_path, file_type=file_type)
+    essays, labels = load_train_data(file_path)
     essays_words = convert_essays_to_words(essays)
     padded_essays_words = pad_essays_words(essays_words)
     essays_embedding = convert_essay_words_to_embeddings(
