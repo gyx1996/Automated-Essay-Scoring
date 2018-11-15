@@ -24,7 +24,6 @@ def load_train_data(filename,
         headline: bool
         target_essay_set: int in {1, 2, ..., 8}
         lowercase: bool
-        file_type: string
 
     Returns:
         essays and scores from given target essay set
@@ -50,6 +49,55 @@ def load_train_data(filename,
         if essay_set == 1:
             essays.append(essay)
             labels.append(int(splits[6]) - 2)
+    return essays, labels
+
+
+def load_valid_data(essay_file,
+                    label_file,
+                    headline=True,
+                    target_essay_set=1,
+                    lowercase=True):
+    """Load data from .tsv file.
+
+    Args:
+        essay_file: string, data/valid_set.tsv
+        label_file: string, data/valid_sample_submission_2_column.tsv
+        headline: bool
+        target_essay_set: int in {1, 2, ..., 8}
+        lowercase: bool
+
+    Returns:
+        essays and scores from given target essay set
+        essays: 1-D string list
+        labels: 1-D int list
+    """
+    label_dict = {}
+    essays = []
+    labels = []
+    with open(label_file, errors='ignore') as fd:
+        if headline:
+            fd.readline()
+        lines = fd.readlines()
+    for line in lines:
+        prediction_id, predicted_score = line.split(',')
+        label_dict[prediction_id] = int(predicted_score)
+    with open(essay_file, errors='ignore') as fd:
+        if headline:
+            fd.readline()
+        lines = fd.readlines()
+    for line in lines:
+        splits = line.split('\t')
+        essay_set = int(splits[1])
+        if target_essay_set == essay_set:
+            if lowercase:
+                essay = splits[2].strip('"').lower()
+            else:
+                essay = splits[2].strip('"')
+        else:
+            essay = ''
+        if essay_set == 1:
+            essays.append(essay)
+            labels.append(label_dict[splits[3]] - 2)
     return essays, labels
 
 
@@ -156,20 +204,40 @@ def convert_essay_words_to_embeddings(
     return reshape(embedded_essays, [-1, essay_max_length, embedding_dim])
 
 
-def generate_essay_embeddings(
-        file_path, embedding_path):
+def get_train_essay_embeddings(file_path, embedding_path):
     """Load data to embedding list.
 
     Args:
         file_path: string, data/training_set_rel3.tsv
         embedding_path: string, data/word_embedding_glove_6B_200d.txt
-        file_type: string, train or test
 
     Returns:
         essays_embedding: 3-D (essay, word, embedding)
         labels: 1-D (essay)
     """
     essays, labels = load_train_data(file_path)
+    essays_words = convert_essays_to_words(essays)
+    padded_essays_words = pad_essays_words(essays_words)
+    essays_embedding = convert_essay_words_to_embeddings(
+        padded_essays_words, embedding_path)
+    labels = reshape(labels, [-1])
+    return essays_embedding, labels
+
+
+def get_valid_essay_embeddings(essay_file, label_file, embedding_path):
+    """Load data to embedding list.
+
+    Args:
+        essay_file: string, data/valid_set.tsv
+        label_file: string, data/valid_sample_submission_2_column.tsv
+        embedding_path: string, data/word_embedding_glove_6B_200d.txt
+
+    Returns:
+        essays_embedding: 3-D (essay, word, embedding)
+        labels: 1-D (essay)
+    """
+
+    essays, labels = load_valid_data(essay_file, label_file)
     essays_words = convert_essays_to_words(essays)
     padded_essays_words = pad_essays_words(essays_words)
     essays_embedding = convert_essay_words_to_embeddings(
