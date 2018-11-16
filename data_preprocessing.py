@@ -103,9 +103,9 @@ def load_valid_data(essay_file,
         if essay_set == 1:
             labels.append(label_dict[splits[3]] - 2)
         elif essay_set == 2:
-            labels.append(int(splits[3]) + int(splits[4]) - 2)
+            labels.append(label_dict[splits[3]] + label_dict[splits[4]] - 2)
         else:
-            labels.append(int(splits[3]))
+            labels.append(label_dict[splits[3]])
     return essays, labels
 
 
