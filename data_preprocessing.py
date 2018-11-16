@@ -84,7 +84,7 @@ def load_valid_data(essay_file,
         lines = fd.readlines()
     for line in lines:
         prediction_id, predicted_score = line.split(',')
-        label_dict[prediction_id] = int(predicted_score)
+        label_dict[prediction_id] = int(predicted_score.strip())
     with open(essay_file, errors='ignore') as fd:
         if headline:
             fd.readline()
@@ -101,11 +101,11 @@ def load_valid_data(essay_file,
             essay = ''
         essays.append(essay)
         if essay_set == 1:
-            labels.append(label_dict[splits[3]] - 2)
+            labels.append(label_dict[splits[3].strip()] - 2)
         elif essay_set == 2:
-            labels.append(label_dict[splits[3]] + label_dict[splits[4]] - 2)
+            labels.append(label_dict[splits[3].strip()] + label_dict[splits[4].strip()] - 2)
         else:
-            labels.append(label_dict[splits[3]])
+            labels.append(label_dict[splits[3].strip()])
     return essays, labels
 
 
