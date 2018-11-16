@@ -189,6 +189,9 @@ class Model:
             total_loss = 0.0
             y_result = []
             for j in range(int(x_test.shape[0] / self.batch_size) + 1):
+                tf.reset_default_graph()
+                loss, y_hat = self._build_graph(input_x, output_y)
+                saver.restore(sess, ckpt.model_checkpoint_path)
                 x_test_batch = next(x_test_batch_generator)
                 y_test_batch = next(y_test_batch_generator)
                 loss_current, y_hat_current = sess.run(
