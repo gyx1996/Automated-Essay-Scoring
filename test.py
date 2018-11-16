@@ -68,11 +68,10 @@ def main(argv):
                 essay_set)
         basic_model.train(essays_embedding, labels)
     y_result = basic_model.test(valid_essays, valid_labels)
-    labels_int = [int(x) for x in valid_labels]
     results_int = [int(x) for x in y_result]
     for i in range(len(valid_labels)):
         print(valid_labels[i], results_int[i], y_result[i])
-    print(score.quadratic_weighted_kappa(labels_int, results_int))
+    print(score.quadratic_weighted_kappa(valid_labels, results_int))
 
 
 if __name__ == '__main__':
