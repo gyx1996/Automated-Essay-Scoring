@@ -44,15 +44,13 @@ def load_train_data(filename,
                 essay = splits[2].strip('"').lower()
             else:
                 essay = splits[2].strip('"')
-        else:
-            essay = ''
-        essays.append(essay)
-        if essay_set == 1:
-            labels.append(int(splits[6]) - 2)
-        elif essay_set == 2:
-            labels.append(int(splits[6]) + int(splits[9]) - 2)
-        else:
-            labels.append(int(splits[6]))
+            essays.append(essay)
+            if target_essay_set == 1:
+                labels.append(int(splits[6]) - 2)
+            elif target_essay_set == 2:
+                labels.append(int(splits[6]) + int(splits[9]) - 2)
+            else:
+                labels.append(int(splits[6]))
     return essays, labels
 
 
@@ -97,15 +95,14 @@ def load_valid_data(essay_file,
                 essay = splits[2].strip('"').lower()
             else:
                 essay = splits[2].strip('"')
-        else:
-            essay = ''
-        essays.append(essay)
-        if essay_set == 1:
-            labels.append(label_dict[splits[3].strip()] - 2)
-        elif essay_set == 2:
-            labels.append(label_dict[splits[3].strip()] + label_dict[splits[4].strip()] - 2)
-        else:
-            labels.append(label_dict[splits[3].strip()])
+            essays.append(essay)
+            if essay_set == 1:
+                labels.append(label_dict[splits[3].strip()] - 2)
+            elif essay_set == 2:
+                labels.append(label_dict[splits[3].strip()]
+                              + label_dict[splits[4].strip()] - 2)
+            else:
+                labels.append(label_dict[splits[3].strip()])
     return essays, labels
 
 
