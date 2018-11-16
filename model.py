@@ -125,7 +125,7 @@ class Model:
         loss, y_hat = self._build_graph(input_x, output_y)
 
         with tf.name_scope('optimize'):
-            optimizer = tf.train.GradientDescentOptimizer(
+            optimizer = tf.train.AdamOptimizer(
                 learning_rate=self.learning_rate).minimize(loss)
 
         x_train_batch_generator = get_pure_batch(
