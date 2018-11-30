@@ -31,7 +31,7 @@ class Model:
                  max_length=500,
                  embedding_dim=200,
                  learning_rate=0.001,
-                 epoch_num=500,
+                 epoch_num=200,
                  batch_size=32,
                  loss_mode='CE',
                  label_num=11):
@@ -77,8 +77,10 @@ class Model:
         if self.loss_mode == 'MSE':
             with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
                 projection_layer = tf.layers.Dense(
-                    1, input_shape=[2 * self.max_length], activation=tf.sigmoid)
-                y_hat = (projection_layer(input_x) + 1) * self.label_num / 2
+                    1, input_shape=[2 * self.max_length])
+                logits = projection_layer(input_x)
+                predicts = tf.nn.softmax(logits=logits, dim=-1)
+                y_hat = predicts * self.label_num
             with tf.name_scope('loss'):
                 loss = tf.losses.mean_squared_error(output_y, y_hat)
         elif self.loss_mode == 'CE':
@@ -93,6 +95,7 @@ class Model:
                 cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=logits, labels=output_y_reshape)
                 loss = tf.reduce_sum(cross_entropy / tf.to_float(self.batch_size))
+
         return loss, y_hat
 
     def _build_graph(self, input_x, output_y):
