@@ -83,7 +83,8 @@ class Model:
         with tf.name_scope('loss'):
             if self.loss_mode == 'MSE':
                 loss = tf.reduce_mean(
-                    tf.square(tf.reshape(output_y, [-1]) - tf.cast(y_hat, tf.float32)))
+                    tf.square(tf.cast(tf.reshape(output_y, [-1]), tf.float32)
+                              - tf.cast(y_hat, tf.float32)))
             elif self.loss_mode == 'CE':
                 cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=logits, labels=tf.reshape(output_y, [-1]))
