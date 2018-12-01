@@ -78,7 +78,7 @@ class Model:
             projection_layer = tf.layers.Dense(
                 self.label_num, input_shape=[2 * self.max_length])
             logits = projection_layer(input_x)
-            predicts = tf.nn.softmax(logits=logits, dimension=-1)
+            predicts = tf.nn.softmax(logits=logits, dim=-1)
             y_hat = tf.argmax(predicts, dimension=-1, output_type=tf.int32)
         with tf.name_scope('loss'):
             if self.loss_mode == 'MSE':
