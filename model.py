@@ -78,13 +78,12 @@ class Model:
             projection_layer = tf.layers.Dense(
                 self.label_num, input_shape=[2 * self.max_length])
             logits = projection_layer(input_x)
-            predicts = tf.nn.softmax(logits=logits, dim=-1)
-            y_hat = tf.argmax(predicts, axis=-1)
+            predicts = tf.nn.softmax(logits=logits, dimension=-1)
+            y_hat = tf.argmax(predicts, dimension=-1, output_type=tf.int32)
         with tf.name_scope('loss'):
             if self.loss_mode == 'MSE':
-                output_y_reshape = tf.reshape(output_y, [-1])
                 loss = tf.reduce_mean(
-                    tf.square(output_y_reshape - y_hat))
+                    tf.square(tf.reshape(output_y, [-1]) - y_hat))
             elif self.loss_mode == 'CE':
                 cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=logits, labels=tf.reshape(output_y, [-1]))
