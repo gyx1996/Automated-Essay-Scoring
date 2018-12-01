@@ -79,7 +79,7 @@ class Model:
                 self.label_num, input_shape=[2 * self.max_length])
             logits = projection_layer(input_x)
             predicts = tf.nn.softmax(logits=logits, dim=-1)
-            y_hat = tf.argmax(predicts, dimension=-1, output_type=tf.int32)
+            y_hat = tf.argmax(predicts, dimension=-1, output_type=tf.float32)
         with tf.name_scope('loss'):
             if self.loss_mode == 'MSE':
                 loss = tf.reduce_mean(
