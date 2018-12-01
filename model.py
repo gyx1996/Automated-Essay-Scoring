@@ -78,11 +78,12 @@ class Model:
             with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
                 projection_layer = tf.layers.Dense(
                     1, input_shape=[2 * self.max_length], activation=tf.sigmoid)
-                y_hat = projection_layer(input_x)
+                logits = projection_layer(input_x)
+                y_hat = logits * self.label_num
             with tf.name_scope('loss'):
                 loss = tf.reduce_mean(tf.square(
-                    tf.cast(tf.reshape(output_y, [-1]), tf.float32)
-                    - tf.cast(tf.reshape(y_hat, [-1]), tf.float32)))
+                    tf.cast(tf.reshape(output_y, [-1]), tf.float32) / self.label_num
+                    - tf.cast(tf.reshape(logits, [-1]), tf.float32)))
         elif self.loss_mode == 'CE':
             with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
                 projection_layer = tf.layers.Dense(
