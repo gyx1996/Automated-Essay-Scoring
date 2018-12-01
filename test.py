@@ -55,6 +55,7 @@ def main(argv):
     else:
         label_num = 61
 
+    print(loss_mode)
     model_name = model_name + loss_mode + str(essay_set)
 
     print('Begin...')
