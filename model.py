@@ -74,23 +74,28 @@ class Model:
         return encoder_outputs, encoder_state
 
     def _scoring(self, input_x, output_y):
-        with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
-            projection_layer = tf.layers.Dense(
-                self.label_num, input_shape=[2 * self.max_length])
-            logits = projection_layer(input_x)
-            predicts = tf.nn.softmax(logits=logits, dim=-1)
-            y_hat = tf.argmax(predicts, dimension=-1)
-        with tf.name_scope('loss'):
-            if self.loss_mode == 'MSE':
-                loss = tf.reduce_mean(
-                    tf.square(tf.cast(tf.reshape(output_y, [-1]), tf.float32)
-                              - tf.cast(y_hat, tf.float32)))
-            elif self.loss_mode == 'CE':
+        if self.loss_mode == 'MSE':
+            with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
+                projection_layer = tf.layers.Dense(
+                    1, input_shape=[2 * self.max_length], activation=tf.sigmoid)
+                y_hat = projection_layer(input_x)
+            with tf.name_scope('loss'):
+                loss = tf.reduce_mean(tf.square(
+                    tf.cast(tf.reshape(output_y, [-1]), tf.float32)
+                    - tf.cast(tf.reshape(y_hat, [-1]), tf.float32)))
+        elif self.loss_mode == 'CE':
+            with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
+                projection_layer = tf.layers.Dense(
+                    self.label_num, input_shape=[2 * self.max_length])
+                logits = projection_layer(input_x)
+                predicts = tf.nn.softmax(logits=logits, dim=-1)
+                y_hat = tf.argmax(predicts, dimension=-1)
+            with tf.name_scope('loss'):
                 cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=logits, labels=tf.reshape(output_y, [-1]))
                 loss = tf.reduce_sum(cross_entropy / tf.to_float(self.batch_size))
-            elif self.loss_mode == 'P':
-                pass
+        elif self.loss_mode == 'P':
+            pass
 
         return loss, y_hat
 
