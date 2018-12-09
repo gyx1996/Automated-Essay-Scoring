@@ -57,7 +57,7 @@ def evaluate():
         ###############################
         # ????
         test_x = torch.FloatTensor(test_x).transpose(0, 1)
-        test_y = torch.FloatTensor(test_y).transpose(0, 1)
+        test_y = torch.LongTensor(test_y).transpose(0, 1)
         predictions = model(test_x, test_y, training=False)
         accuracy = sum([1 if torch.equal(pred.data, y.data) else 0
                         for pred, y in zip(predictions, test_y)])
@@ -75,7 +75,7 @@ for epoch in range(MAX_EPOCH):
     ############################
     # compute the  prediction
     train_x = torch.FloatTensor(train_x).transpose(0, 1)
-    train_y = torch.FloatTensor(train_y).transpose(0, 1)
+    train_y = torch.LongTensor(train_y).transpose(0, 1)
     prediction = model(train_x, train_y, training=True).view(-1, senlen)
     train_y = train_y.contiguous().view(-1)
     ###########################
