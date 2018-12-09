@@ -1,7 +1,7 @@
 import numpy as np
 ##################
 # ???
-from pointer_network import PointerNetwork
+from pointer_network import PointerNetwork, PtrNet
 # ???
 ####################
 import torch
@@ -12,17 +12,18 @@ MAX_EPOCH = 100000
 # ?????construct your model
 shiyan = 1
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 if shiyan == 1:
     senlen = 5
+    model = PtrNet(input_size=senlen, output_size=senlen)
 elif shiyan == 2:
     senlen = 10
+    model = PtrNet(input_size=senlen, output_size=senlen)
 else:
     senlen = 5
+    model = PointerNetwork(input_size=senlen, output_size=senlen)
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = PointerNetwork(input_size=senlen, output_size=senlen)
 model.to(device)
-# model = torch.load('model/1-6000.pkl')
 # ?????
 #############################
 
