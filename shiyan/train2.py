@@ -19,8 +19,9 @@ elif shiyan == 2:
 else:
     senlen = 5
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = PointerNetwork(output_size=senlen)
-
+model.to(device)
 # model = torch.load('model/1-6000.pkl')
 # ?????
 #############################
@@ -29,7 +30,7 @@ model = PointerNetwork(output_size=senlen)
 batch_size = 256
 
 optimizer = torch.optim.Adam(params=model.parameters(), lr=0.001)
-loss_fun = torch.nn.CrossEntropyLoss()
+loss_fun = torch.nn.CrossEntropyLoss().to(device)
 
 
 def getdata(shiyan=shiyan, batch_size=batch_size):
@@ -56,8 +57,8 @@ def evaluate():
         test_x, test_y = getdata(shiyan=shiyan)
         ###############################
         # ????
-        test_x = torch.FloatTensor(test_x).transpose(0, 1)
-        test_y = torch.LongTensor(test_y).transpose(0, 1)
+        test_x = torch.FloatTensor(test_x).transpose(0, 1).to(device)
+        test_y = torch.LongTensor(test_y).transpose(0, 1).to(device)
         predictions = model(test_x, test_y, training=False)
         accuracy = sum([1 if torch.equal(pred.data, y.data) else 0
                         for pred, y in zip(predictions, test_y)])
@@ -74,8 +75,8 @@ for epoch in range(MAX_EPOCH):
 
     ############################
     # compute the  prediction
-    train_x = torch.FloatTensor(train_x).transpose(0, 1)
-    train_y = torch.LongTensor(train_y).transpose(0, 1)
+    train_x = torch.FloatTensor(train_x).transpose(0, 1).to(device)
+    train_y = torch.LongTensor(train_y).transpose(0, 1).to(device)
     prediction = model(train_x, train_y, training=True).view(-1, senlen)
     train_y = train_y.contiguous().view(-1)
     ###########################

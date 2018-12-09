@@ -3,6 +3,9 @@ import torch.nn as nn
 from torch.nn.functional import log_softmax, relu
 
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
 class PointerNetwork(nn.Module):
     def __init__(self, input_size=5, output_size=5, embedding_size=256, hidden_size=256):
         super().__init__()
@@ -22,15 +25,15 @@ class PointerNetwork(nn.Module):
         batch_size = inputs.size(1)
         max_len = targets.size(0)
         embedded_inputs = torch.zeros(
-            (self.input_size, batch_size, self.embedding_size))
+            (self.input_size, batch_size, self.embedding_size)).to(device)
         for i in range(batch_size):
             for j in range(self.input_size):
-                embedded_inputs[j][i] = self.encoder_embedding(inputs[j][i].resize_(1, 1))
+                embedded_inputs[j][i] = self.encoder_embedding(inputs[j][i].resize_(1, 1).float())
         if training:
             targets = self.decoder_embedding(targets)
         encoder_outputs, hidden = self.encoder(embedded_inputs)
-        decoder_outputs = torch.zeros((max_len, batch_size, self.output_size))
-        decoder_input = torch.zeros((batch_size, self.embedding_size))
+        decoder_outputs = torch.zeros((max_len, batch_size, self.output_size)).to(device)
+        decoder_input = torch.zeros((batch_size, self.embedding_size)).to(device)
         hidden = hidden.squeeze(0)  # (B, H)
         for i in range(max_len):
             hidden = self.decoder(decoder_input, hidden)
@@ -47,7 +50,7 @@ class PointerNetwork(nn.Module):
         if training:
             return decoder_outputs
         else:
-            outputs = torch.zeros(batch_size, self.output_size)
+            outputs = torch.zeros(batch_size, self.output_size).to(device)
             decoder_outputs = decoder_outputs.permute(1, 0, 2)
             for i in range(batch_size):
                 outputs[i] = torch.argmax(decoder_outputs[i], 1)
