@@ -20,7 +20,7 @@ else:
     senlen = 5
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = PointerNetwork(output_size=senlen)
+model = PointerNetwork(input_size=senlen, output_size=senlen)
 model.to(device)
 # model = torch.load('model/1-6000.pkl')
 # ?????
