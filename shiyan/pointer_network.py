@@ -75,7 +75,7 @@ class PtrNet(nn.Module):
     def forward(self, inputs, targets, training=True):
         batch_size = inputs.size(1)
         max_len = targets.size(0)
-        embedded_inputs = self.encoder_embedding(inputs)
+        embedded_inputs = self.encoder_embedding(inputs.long())
         if training:
             targets = self.decoder_embedding(targets)
         encoder_outputs, hidden = self.encoder(embedded_inputs)
