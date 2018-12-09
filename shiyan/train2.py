@@ -75,8 +75,8 @@ for epoch in range(MAX_EPOCH):
 
     ############################
     # compute the  prediction
-    train_x = torch.LongTensor(train_x).transpose(0, 1).to(device)
-    train_y = torch.LongTensor(train_y).transpose(0, 1).to(device)
+    train_x = torch.FloatTensor(train_x).transpose(0, 1).to(device)
+    train_y = torch.FloatTensor(train_y).transpose(0, 1).to(device)
     prediction = model(train_x, train_y, training=True).view(-1, senlen)
     train_y = train_y.contiguous().view(-1)
     ###########################

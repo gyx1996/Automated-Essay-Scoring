@@ -28,7 +28,7 @@ class PointerNetwork(nn.Module):
             (self.input_size, batch_size, self.embedding_size)).to(device)
         for i in range(batch_size):
             for j in range(self.input_size):
-                embedded_inputs[j][i] = self.encoder_embedding(inputs[j][i].resize_(1, 1).float())
+                embedded_inputs[j][i] = self.encoder_embedding(inputs[j][i].resize_(1, 1))
         if training:
             targets = self.decoder_embedding(targets)
         encoder_outputs, hidden = self.encoder(embedded_inputs)
