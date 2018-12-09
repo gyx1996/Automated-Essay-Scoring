@@ -58,7 +58,7 @@ def evaluate():
         ###############################
         # ????
         test_x = torch.FloatTensor(test_x).transpose(0, 1).to(device)
-        test_y = torch.LongTensor(test_y).transpose(0, 1).to(device)
+        test_y = torch.FloatTensor(test_y).transpose(0, 1).to(device)
         predictions = model(test_x, test_y, training=False)
         accuracy = sum([1 if torch.equal(pred.data, y.data) else 0
                         for pred, y in zip(predictions, test_y)])
