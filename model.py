@@ -30,7 +30,7 @@ class Model:
                  name='essay_mse',
                  max_length=500,
                  embedding_dim=200,
-                 learning_rate=0.001,
+                 learning_rate=0.0001,
                  epoch_num=200,
                  batch_size=32,
                  loss_mode='CE',
@@ -96,8 +96,42 @@ class Model:
                     logits=logits, labels=tf.reshape(output_y, [-1]))
                 loss = tf.reduce_sum(cross_entropy / tf.to_float(self.batch_size))
         elif self.loss_mode == 'P':
-            pass
-
+            with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
+                projection_layer = tf.layers.Dense(
+                    self.label_num, input_shape=[2 * self.max_length])
+                logits = projection_layer(input_x)
+                predicts = tf.nn.softmax(logits=logits, dim=-1)
+                y_hat = tf.argmax(predicts, dimension=-1)
+            with tf.name_scope('loss'):
+                i = tf.constant(
+                    np.array([range(self.label_num)] * self.batch_size),
+                    dtype=tf.float32)
+                penalty = ((i - tf.reshape(
+                    tf.tile(tf.to_float(output_y), [1, self.label_num]),
+                    [-1, self.label_num])) ** 2) / ((self.label_num - 1) ** 2)
+                loss = tf.reduce_mean(tf.reduce_sum(predicts * penalty, 1))
+        else:
+            with tf.variable_scope('scoring', reuse=tf.AUTO_REUSE):
+                projection_layer = tf.layers.Dense(
+                    self.label_num, input_shape=[2 * self.max_length])
+                logits = projection_layer(input_x)
+                predicts = tf.nn.softmax(logits=logits, dim=-1)
+                y_hat = tf.argmax(predicts, dimension=-1)
+            with tf.name_scope('loss'):
+                i = tf.constant(
+                    np.array([range(self.label_num)] * self.batch_size),
+                    dtype=tf.float32)
+                penalty = ((i - tf.reshape(
+                    tf.tile(tf.to_float(output_y), [1, self.label_num]),
+                    [-1, self.label_num])) ** 2) / ((self.label_num - 1) ** 2)
+                loss_p = tf.reduce_mean(tf.reduce_sum(predicts * penalty, 1))
+                cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+                    logits=logits, labels=tf.reshape(output_y, [-1]))
+                loss_ce = tf.reduce_sum(cross_entropy / tf.to_float(self.batch_size))
+                loss_mse = tf.reduce_mean(tf.square(
+                    tf.cast(tf.reshape(output_y, [-1]), tf.float32) / self.label_num
+                    - tf.cast(tf.reshape(logits, [-1]), tf.float32)))
+                loss = 0.2 * loss_mse + 0.4 * loss_ce + 0.4 * loss_p
         return loss, y_hat
 
     def _build_graph(self, input_x, output_y):

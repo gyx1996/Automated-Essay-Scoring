@@ -42,7 +42,7 @@ def main(argv):
         model_name = 'Default'
 
     if not loss_mode:
-        loss_mode = 'CE'
+        loss_mode = 'P'
 
     if essay_set in (1, 2):
         label_num = 11
